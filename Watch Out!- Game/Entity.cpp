@@ -32,4 +32,4 @@ void Entity::update() {
 
 void Entity::draw(sf::RenderWindow& window) {
     doDraw(window); // La fel și aici
-}
+} 

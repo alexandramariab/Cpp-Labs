@@ -24,7 +24,9 @@ add_executable(untitled main.cpp
         Laser.cpp
         Alien.h
         Alien.cpp
-        Exceptions.h)
+        Exceptions.h
+        PowerUp.h
+        PowerUp.cpp)
 target_compile_features(untitled PRIVATE cxx_std_17)
 target_link_libraries(untitled PRIVATE SFML::Graphics)
 

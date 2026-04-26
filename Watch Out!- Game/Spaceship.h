@@ -27,6 +27,10 @@ public:
     // Cerința 2.e.4: Clone cu Smart Pointers
     std::shared_ptr<Entity> clone() const override;
     sf::FloatRect getBounds() const override { return sprite.getGlobalBounds(); }
+    void activateSpeedBoost();
+    void activateClone();
+    void updatePowerUps(); // Metodă pentru a gestiona cronometrul de 5 secunde
+    void draw(sf::RenderWindow& window); // O suprascriem pentru a desena și clona
 
 private:
     sf::Texture image;
@@ -36,6 +40,11 @@ private:
     // Cerința 2.c.2: Implementarea NVI (partea privată)
     void doUpdate() override;
     void doDraw(sf::RenderWindow& window) override;
+    float fireInterval = 0.5f;
+    bool speedBoostActive = false;
+    bool cloneActive = false;
+    sf::Clock powerUpClock;
+    std::shared_ptr<Spaceship> shipClone = nullptr;
 };
 
 #endif//SPACESHIP_H

@@ -3,6 +3,8 @@
 #include <iostream>
 #include "Exceptions.h"
 #include <algorithm>
+#include "PowerUp.h"
+#include <random>
 
 // 1. Constructorul devine simplu, fără 'window(...)'
 Game::Game() : run(true) {
@@ -40,17 +42,60 @@ void Game::Update() {
     if (!run) return;
 
     spaceship.update();
+    spaceship.updatePowerUps();
+
+    // 2. Generare aleatorie Power-Ups (șansă mică pe fiecare frame)
+    if (rand() % 1000 == 0) {
+        float spawnX = static_cast<float>(rand() % (Config::SCREEN_WIDTH - 50) + 25);
+        auto isClone = (rand() % 2 == 0);
+
+        if (isClone) {
+            auto pUp = std::make_shared<ClonePowerUp>(spawnX, -30.f);
+            allEntities.push_back(pUp);
+        } else {
+            auto pUp = std::make_shared<SpeedPowerUp>(spawnX, -30.f);
+            allEntities.push_back(pUp);
+        }
+    }
+
     bool hitEdge = false;
 
     // DOWNCASTING pentru a verifica marginile alienilor
-    for (auto& entity : allEntities) {
+    // 2. Update și Management Entități (Alieni și Power-Ups)
+    for (auto it = allEntities.begin(); it != allEntities.end(); ) {
+        auto entity = *it;
         entity->update();
-        auto alienPtr = std::dynamic_pointer_cast<Alien>(entity); // Cerința 2.e.2
-        if (alienPtr) {
-            if (alienPtr->getRightEdge() > Config::SCREEN_WIDTH || alienPtr->getLeftEdge() < 0) {
+
+        auto pUp = std::dynamic_pointer_cast<PowerUp>(entity);
+        auto alien = std::dynamic_pointer_cast<Alien>(entity);
+
+        if (pUp) {
+            auto shipBounds = spaceship.getBounds();
+            auto pUpBounds = pUp->getBounds();
+            auto isCollected = shipBounds.findIntersection(pUpBounds);
+            auto isOut = pUp->isExpired();
+
+            if (isCollected) {
+                pUp->applyEffect(spaceship);
+                it = allEntities.erase(it);
+                continue;
+            }
+
+            if (isOut) {
+                it = allEntities.erase(it);
+                continue;
+            }
+        }
+
+        if (alien) {
+            auto right = alien->getRightEdge();
+            auto left = alien->getLeftEdge();
+
+            if (right > Config::SCREEN_WIDTH || left < 0) {
                 hitEdge = true;
             }
         }
+        ++it;
     }
 
     if (hitEdge) {
@@ -61,17 +106,22 @@ void Game::Update() {
         }
     }
 
-    // 2. Logică Tragere Alien (Aici era lipsa)
-    if (alienFireClock.getElapsedTime().asSeconds() > fireInterval && !allEntities.empty()) {
-        int randomIndex = rand() % allEntities.size();
-        auto shooter = allEntities[randomIndex];
-        auto bounds = shooter->getBounds();
-        sf::Vector2f firePos(
-        bounds.position.x + bounds.size.x / 2.f,
-        bounds.position.y + bounds.size.y
-    );
+    /// 4. Tragere Alien
+    auto timeElapsed = alienFireClock.getElapsedTime().asSeconds();
+    if (timeElapsed > fireInterval && !allEntities.empty()) {
+        std::vector<std::shared_ptr<Alien>> aliensOnly;
+        for (auto& e : allEntities) {
+            auto a = std::dynamic_pointer_cast<Alien>(e);
+            if (a) aliensOnly.push_back(a);
+        }
 
-        alienLasers.push_back(std::make_shared<Laser>(firePos, 5.f));
+        if (!aliensOnly.empty()) {
+            int randomIndex = rand() % aliensOnly.size();
+            auto shooter = aliensOnly[randomIndex];
+            auto firePos = shooter->getCenter();
+            auto newLaser = std::make_shared<Laser>(firePos, 5.f);
+            alienLasers.push_back(newLaser);
+        }
         alienFireClock.restart();
     }
 
@@ -119,38 +169,67 @@ void Game::CheckForCollisions() {
     auto& sLasers = spaceship.getLasers();
 
     // Laserele navei lovesc alienii
+    // 1. Laserele navei vs Alieni
     for (auto lIt = sLasers.begin(); lIt != sLasers.end(); ) {
-        bool hit = false;
+        auto laser = *lIt;
+        bool hitSomething = false;
+
         for (auto eIt = allEntities.begin(); eIt != allEntities.end(); ) {
-            if ((*lIt)->getBounds().findIntersection((*eIt)->getBounds())) {
-                eIt = allEntities.erase(eIt);
-                hit = true;
-                break;
-            } else ++eIt;
+            auto entity = *eIt;
+            auto alienTarget = std::dynamic_pointer_cast<Alien>(entity);
+
+            // Verificăm DACĂ e alien (dacă e Power-Up, ignorăm)
+            if (alienTarget) {
+                auto lBounds = laser->getBounds();
+                auto aBounds = alienTarget->getBounds();
+                auto isHit = lBounds.findIntersection(aBounds);
+
+                if (isHit) {
+                    eIt = allEntities.erase(eIt);
+                    hitSomething = true;
+                    break;
+                } else {
+                    ++eIt;
+                }
+            } else {
+                ++eIt;
+            }
         }
-        if (hit) lIt = sLasers.erase(lIt);
+        if (hitSomething) lIt = sLasers.erase(lIt);
         else ++lIt;
     }
 
-    // Laserele alienilor lovesc nava (GAME OVER)
-    for (auto it = alienLasers.begin(); it != alienLasers.end(); ) {
-        if ((*it)->getBounds().findIntersection(spaceship.getBounds())) {
+    // 2. Laserele alienilor vs Nava
+    for (auto& laser : alienLasers) {
+        auto lBounds = laser->getBounds();
+        auto sBounds = spaceship.getBounds();
+        auto hitShip = lBounds.findIntersection(sBounds);
+
+        if (hitShip) {
             run = false;
             std::cout << "GAME OVER: Ai fost impuscat!" << std::endl;
             return;
-        } else {
-            ++it;
         }
     }
 
     // Alienii ating nava direct sau trec de ea (GAME OVER)
     for (auto& entity : allEntities) {
-        auto bounds = entity->getBounds();
-        if (bounds.findIntersection(spaceship.getBounds()) ||
-            bounds.position.y + bounds.size.y > spaceship.getBounds().position.y) {
-            run = false;
-            std::cout << "GAME OVER: Alienii te-au invadat!" << std::endl;
-            return;
+        auto alien = std::dynamic_pointer_cast<Alien>(entity);
+
+        // VERIFICARE CRITICĂ: Mai întâi vedem dacă e alien, apoi îi cerem datele
+        if (alien) {
+            auto aBounds = alien->getBounds();
+            auto sBounds = spaceship.getBounds();
+
+            auto collisionWithShip = aBounds.findIntersection(sBounds);
+            // Verificăm dacă partea de jos a alienului a trecut de nava (folosind poziția)
+            auto passedLimit = (aBounds.position.y + aBounds.size.y >= sBounds.position.y);
+
+            if (collisionWithShip || passedLimit) {
+                run = false;
+                std::cout << "GAME OVER: Invazia a reusit!" << std::endl;
+                return;
             }
+        }
     }
 }
