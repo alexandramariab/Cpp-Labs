@@ -10,8 +10,6 @@ namespace Config {
     // Dimensiuni fereastră
     const unsigned int SCREEN_WIDTH = 850;
     const unsigned int SCREEN_HEIGHT = 800;
-
-    // Culori (Folosim acoladele pentru SFML 3.0)
     const sf::Color BACKGROUND_COLOR{ 20, 20, 40 };
 }
 #endif // CONSTANTS_H

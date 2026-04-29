@@ -8,21 +8,22 @@
 #include "Laser.h"
 
 class Game {
-public:
-    Game();
-    ~Game();
-    void Draw(sf::RenderWindow& window); // Primește fereastra din main
-    void Update();
-    void HandleInput();
-
 private:
     Spaceship spaceship;
     std::vector<std::shared_ptr<Entity>> allEntities;
-    std::vector<std::shared_ptr<Laser>> alienLasers;  // Laserele trase de inamici
+    std::vector<std::shared_ptr<Laser>> alienLasers; 
     sf::Clock alienFireClock;
     float fireInterval = 1.2f;
-    void initAliens(); // Funcție internă de populare a nivelului
+    void initAliens(); 
     void CheckForCollisions();
     bool run;
+
+public:
+    Game();
+    ~Game();
+    void Draw(sf::RenderWindow& window); 
+    void Update();
+    void HandleInput();
+
 };
 #endif//GAME_H

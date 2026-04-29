@@ -6,7 +6,6 @@
 #include <iostream>
 #include "Exceptions.h"
 
-// Inițializăm variabilele statice
 float Alien::speed = 2.0f;
 int Alien::direction = 1;
 
@@ -29,7 +28,7 @@ void Alien::moveDown(float distance) {
 }
 
 void Alien::changeDirection() {
-    direction *= -1;
+    direction *= -1; //inversam directia de mers
 }
 
 float Alien::getRightEdge() const {
@@ -42,15 +41,6 @@ float Alien::getLeftEdge() const {
 
 void Alien::doDraw(sf::RenderWindow& window) {
     if (alive) window.draw(sprite);
-}
-
-void Alien::reactToCollision(Entity& other) {
-    // Dacă "other" este un Laser, alien-ul moare (Cerința 1 - Logica specifica temei)
-    alive = false;
-}
-
-std::shared_ptr<Entity> Alien::clone() const {
-    return std::make_shared<Alien>(*this);
 }
 
 sf::Vector2f Alien::getCenter() const {

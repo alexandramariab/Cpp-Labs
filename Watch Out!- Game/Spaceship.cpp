@@ -3,16 +3,16 @@
 #include "Exceptions.h"
 #include <iostream>
 
-// Constructorul: Apelăm constructorul clasei de bază Entity
+// Constructor
 Spaceship::Spaceship() : Entity(0.f, 0.f), image(), sprite(image) {
 
     if (!image.loadFromFile("Graphics/spaceship.png")) {
-        throw ResourceException("Graphics/spaceship.png"); // Cerința 3.b
+        throw ResourceException("Graphics/spaceship.png"); 
     }
 
     sprite.setTexture(image, true);
 
-    // Calculăm poziția folosind variabila 'position' moștenită din Entity
+    //centram nava pe orizontală și o plasam în partea de jos a ecranului
     position.x = (static_cast<float>(Config::SCREEN_WIDTH) - image.getSize().x) / 2.f;
     position.y = static_cast<float>(Config::SCREEN_HEIGHT) - image.getSize().y - 20.f;
     sprite.setPosition(position);
@@ -24,7 +24,7 @@ Spaceship::Spaceship(const Spaceship& other) : Entity(other), image(other.image)
     sprite.setPosition(position);
 }
 
-// Funcția swap (ajutătoare pentru operator=)
+// Funcția swap
 void swap(Spaceship& first, Spaceship& second) noexcept {
     using std::swap;
     swap(first.position, second.position);
@@ -33,14 +33,12 @@ void swap(Spaceship& first, Spaceship& second) noexcept {
     second.sprite.setTexture(second.image, true);
 }
 
+//operator de atribuire folosind copy-and-swap
 Spaceship& Spaceship::operator=(Spaceship other) {
     swap(*this, other);
     return *this;
 }
 
-Spaceship::~Spaceship() {
-    // entityCount scade automat prin destructorul lui Entity!
-}
 
 void Spaceship::doDraw(sf::RenderWindow& window) {
     window.draw(sprite);
@@ -52,8 +50,8 @@ void Spaceship::doUpdate() {
 }
 
 void Spaceship::MoveLeft() {
-    position.x -= 7;
-    if (position.x < 0) {
+    position.x -= 7; //mutam nava la stanga cu 7 pixeli
+    if (position.x < 0) {  //daca depasim marginea 
         position.x = 0;
     }
 }
@@ -66,61 +64,56 @@ void Spaceship::MoveRight() {
     }
 }   
 
-void Spaceship::reactToCollision(Entity& other) {
-    // Aici vei pune logica mai târziu (ex: dacă e lovită de un laser inamic)
-}
 
-std::shared_ptr<Entity> Spaceship::clone() const {
-    // Cerința 2.e: Virtual Constructor pattern folosind shared_ptr
-    return std::make_shared<Spaceship>(*this);
+std::shared_ptr<Spaceship> Spaceship::clone() const {
+    return std::make_shared<Spaceship>(*this); //returnează o copie într-un Smart Pointer
 }
 void Spaceship::fire() {
-    // Tragem doar o dată la 0.35 secunde
     if (fireClock.getElapsedTime().asSeconds() > fireInterval) {
-        // Poziționăm laserul în vârful navei
+        //poziționăm laserul în vârful navei
         sf::Vector2f laserPos = { position.x + image.getSize().x / 2.f - 2.f, position.y };
-        lasers.push_back(std::make_shared<Laser>(laserPos, -10.f));
-        // Dacă avem clonă, trage și ea!
+        lasers.push_back(std::make_shared<Laser>(laserPos, -10.f)); //adaugam laserul in vector, il facem sa se miste in sus
+        //dacă avem clonă, trage și ea
         if (cloneActive && shipClone) {
             lasers.push_back(std::make_shared<Laser>(sf::Vector2f(shipClone->position.x + 20, shipClone->position.y), -10.f));
         }
-        fireClock.restart();
+        fireClock.restart(); //resetează cronometrul pentru următorul foc
     }
 }
 void Spaceship::activateSpeedBoost() {
     speedBoostActive = true;
-    fireInterval = 0.15f; // Trage mult mai rapid
+    fireInterval = 0.15f; //trage mult mai rapid
     powerUpClock.restart();
 }
 
 void Spaceship::activateClone() {
     cloneActive = true;
-    // CERINȚA 2.e: Aici folosim clone() cu un scop real
+    // Cream o copie a navei curente
     auto duplicated = this->clone();
     shipClone = std::dynamic_pointer_cast<Spaceship>(duplicated);
     powerUpClock.restart();
 }
 
 void Spaceship::updatePowerUps() {
+    //daca a expirat timpul
     if ((speedBoostActive || cloneActive) && powerUpClock.getElapsedTime().asSeconds() > 5.0f) {
         speedBoostActive = false;
         cloneActive = false;
-        fireInterval = 0.5f;
-        shipClone = nullptr; // Ștergem clona
+        fireInterval = 0.5f; //revine la viteza normală
+        shipClone = nullptr; //stergem clona
     }
 
     if (cloneActive && shipClone) {
-        // Clona urmărește nava la o distanță fixă (ex: 50 pixeli la dreapta)
+        //clona urmărește nava la o distanță fixă (50 pixeli la dreapta)
         shipClone->position = sf::Vector2f(position.x + 50.f, position.y);
         shipClone->doUpdate();
     }
 }
 void Spaceship::draw(sf::RenderWindow& window) {
-    // Mai întâi apelăm metoda din Entity ca să desenăm nava de bază
+    //apelăm metoda din Entity ca să desenăm nava de bază
     Entity::draw(window);
 
-    // Apoi, DACĂ avem o clonă, o punem și pe ea să se deseneze
-    // Presupunând că ai variabilele acestea în .h:
+    //daca avem o clonă, o punem și pe ea să se deseneze
     if (shipClone != nullptr) {
         shipClone->draw(window);
     }

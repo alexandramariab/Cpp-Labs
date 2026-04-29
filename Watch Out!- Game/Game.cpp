@@ -6,14 +6,12 @@
 #include "PowerUp.h"
 #include <random>
 
-// 1. Constructorul devine simplu, fără 'window(...)'
 Game::Game() : run(true) {
     initAliens();
 }
 
 Game::~Game() {}
 
-// 2. Funcția Draw folosește fereastra primită din main
 void Game::Draw(sf::RenderWindow& window) {
     spaceship.draw(window);
     for (auto& entity : allEntities) {
@@ -23,9 +21,9 @@ void Game::Draw(sf::RenderWindow& window) {
     for (auto& laser : alienLasers) laser->draw(window);
 }
 
-void Game::HandleInput() {
+void Game::HandleInput() { // Gestionarea intrărilor de la tastatură
 
-    if (!run) return; // Blocăm controlul navei dacă jocul s-a terminat
+    if (!run) return; // Controlul navei este blocat dacă jocul s-a terminat
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) {
         spaceship.MoveLeft();
@@ -38,13 +36,13 @@ void Game::HandleInput() {
     }
 }
 
-void Game::Update() {
+void Game::Update() { //Actualizează starea tuturor obiectelor la fiecare cadru
     if (!run) return;
 
     spaceship.update();
     spaceship.updatePowerUps();
 
-    // 2. Generare aleatorie Power-Ups (șansă mică pe fiecare frame)
+    // generam random power-up-uri
     if (rand() % 1000 == 0) {
         float spawnX = static_cast<float>(rand() % (Config::SCREEN_WIDTH - 50) + 25);
         auto isClone = (rand() % 2 == 0);
@@ -60,8 +58,6 @@ void Game::Update() {
 
     bool hitEdge = false;
 
-    // DOWNCASTING pentru a verifica marginile alienilor
-    // 2. Update și Management Entități (Alieni și Power-Ups)
     for (auto it = allEntities.begin(); it != allEntities.end(); ) {
         auto entity = *it;
         entity->update();
@@ -69,7 +65,7 @@ void Game::Update() {
         auto pUp = std::dynamic_pointer_cast<PowerUp>(entity);
         auto alien = std::dynamic_pointer_cast<Alien>(entity);
 
-        if (pUp) {
+        if (pUp) { //Verificăm dacă jucătorul a colectat bonusul
             auto shipBounds = spaceship.getBounds();
             auto pUpBounds = pUp->getBounds();
             auto isCollected = shipBounds.findIntersection(pUpBounds);
@@ -91,7 +87,7 @@ void Game::Update() {
             auto right = alien->getRightEdge();
             auto left = alien->getLeftEdge();
 
-            if (right > Config::SCREEN_WIDTH || left < 0) {
+            if (right > Config::SCREEN_WIDTH || left < 0) { //daca a atins marginea
                 hitEdge = true;
             }
         }
@@ -99,24 +95,24 @@ void Game::Update() {
     }
 
     if (hitEdge) {
-        Alien::changeDirection(); // Static
+        Alien::changeDirection(); 
         for (auto& entity : allEntities) {
             if (auto a = std::dynamic_pointer_cast<Alien>(entity))
                 a->moveDown(20.f);
         }
     }
 
-    /// 4. Tragere Alien
+    //logica de tragere pt aliens
     auto timeElapsed = alienFireClock.getElapsedTime().asSeconds();
     if (timeElapsed > fireInterval && !allEntities.empty()) {
-        std::vector<std::shared_ptr<Alien>> aliensOnly;
+        std::vector<std::shared_ptr<Alien>> aliensOnly; // Filtrăm doar Alieni din allEntities
         for (auto& e : allEntities) {
             auto a = std::dynamic_pointer_cast<Alien>(e);
             if (a) aliensOnly.push_back(a);
         }
 
         if (!aliensOnly.empty()) {
-            int randomIndex = rand() % aliensOnly.size();
+            int randomIndex = rand() % aliensOnly.size(); // Alegem un alien random pentru a trage
             auto shooter = aliensOnly[randomIndex];
             auto firePos = shooter->getCenter();
             auto newLaser = std::make_shared<Laser>(firePos, 5.f);
@@ -125,29 +121,50 @@ void Game::Update() {
         alienFireClock.restart();
     }
 
-
+    //actualizăm laserele navei
     auto& lasers = spaceship.getLasers();
-    lasers.erase(std::remove_if(lasers.begin(), lasers.end(), [](const std::shared_ptr<Laser>& l) {
-        l->update();
-        return !l->isActive();
-    }), lasers.end());
+    auto it = lasers.begin();
+    while (it != lasers.end()) {
+        (*it)->update(); //mișcăm laserul
 
-    alienLasers.erase(std::remove_if(alienLasers.begin(), alienLasers.end(), [](auto& l) {
-        l->update();
-        return !l->isActive();
-    }), alienLasers.end());
+        if (!(*it)->isActive()) {
+            it = lasers.erase(it); 
+        } else {
+            ++it;
+        }
+    }
+
+    //actualizăm laserele alienilor
+    auto itAlien = alienLasers.begin();
+    while (itAlien != alienLasers.end()) {
+        (*itAlien)->update(); 
+
+        if (!(*itAlien)->isActive()) {
+            itAlien = alienLasers.erase(itAlien);
+        } else {
+            ++itAlien;
+        }
+    }
 
     CheckForCollisions();
 
-    // 5. CONDIȚIE VICTORIE
-    if (allEntities.empty()) {
+    //conditia de victorie
+    bool anyAliensLeft = false;
+    for (auto& entity : allEntities) {
+        if (std::dynamic_pointer_cast<Alien>(entity)) {
+            anyAliensLeft = true;
+            break; 
+        }
+    }
+
+    if (!anyAliensLeft) {
         run = false;
         std::cout << "FELICITARI! Ai castigat!" << std::endl;
     }
 }
 
 void Game::initAliens() {
-    allEntities.clear(); // Folosim numele corect din clasa ta
+    allEntities.clear();
     for (int row = 0; row < 5; row++) {
         for (int column = 0; column < 10; column++) {
             float x = 75.f + column * 55.f;
@@ -158,7 +175,7 @@ void Game::initAliens() {
             else if (row <= 2) alienType = 2;
             else alienType = 1;
 
-            // Adăugăm în allEntities
+            // le adaugam in vector
             allEntities.push_back(std::make_shared<Alien>(x, y, alienType));
         }
     }
@@ -169,7 +186,6 @@ void Game::CheckForCollisions() {
     auto& sLasers = spaceship.getLasers();
 
     // Laserele navei lovesc alienii
-    // 1. Laserele navei vs Alieni
     for (auto lIt = sLasers.begin(); lIt != sLasers.end(); ) {
         auto laser = *lIt;
         bool hitSomething = false;
@@ -178,8 +194,7 @@ void Game::CheckForCollisions() {
             auto entity = *eIt;
             auto alienTarget = std::dynamic_pointer_cast<Alien>(entity);
 
-            // Verificăm DACĂ e alien (dacă e Power-Up, ignorăm)
-            if (alienTarget) {
+            if (alienTarget) { 
                 auto lBounds = laser->getBounds();
                 auto aBounds = alienTarget->getBounds();
                 auto isHit = lBounds.findIntersection(aBounds);
@@ -199,7 +214,7 @@ void Game::CheckForCollisions() {
         else ++lIt;
     }
 
-    // 2. Laserele alienilor vs Nava
+    //laserele alienilor vs nava
     for (auto& laser : alienLasers) {
         auto lBounds = laser->getBounds();
         auto sBounds = spaceship.getBounds();
@@ -212,17 +227,16 @@ void Game::CheckForCollisions() {
         }
     }
 
-    // Alienii ating nava direct sau trec de ea (GAME OVER)
+    // daca alienii ating nava direct sau trec de ea, pierdem jocul
     for (auto& entity : allEntities) {
         auto alien = std::dynamic_pointer_cast<Alien>(entity);
 
-        // VERIFICARE CRITICĂ: Mai întâi vedem dacă e alien, apoi îi cerem datele
         if (alien) {
             auto aBounds = alien->getBounds();
             auto sBounds = spaceship.getBounds();
 
             auto collisionWithShip = aBounds.findIntersection(sBounds);
-            // Verificăm dacă partea de jos a alienului a trecut de nava (folosind poziția)
+            //verificăm dacă partea de jos a alienului a trecut de nava
             auto passedLimit = (aBounds.position.y + aBounds.size.y >= sBounds.position.y);
 
             if (collisionWithShip || passedLimit) {

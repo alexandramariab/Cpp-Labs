@@ -7,7 +7,7 @@
 PowerUp::PowerUp(float x, float y, sf::Color color) : Entity(x, y), active(true) {
     shape.setSize({25.f, 25.f});
     shape.setFillColor(color);
-    shape.setPosition(position); // 'position' este protected în Entity, e singurul acceptat
+    shape.setPosition(position);
 }
 
 void PowerUp::doUpdate() {
@@ -20,10 +20,6 @@ void PowerUp::doDraw(sf::RenderWindow& window) {
     if (active) window.draw(shape);
 }
 
-void PowerUp::reactToCollision(Entity&) {
-    active = false;
-}
-
 sf::FloatRect PowerUp::getBounds() const {
     return shape.getGlobalBounds();
 }
@@ -32,19 +28,10 @@ bool PowerUp::isExpired() const {
     return !active;
 }
 
-// Implementări Derivate
 void SpeedPowerUp::applyEffect(Spaceship& ship) {
-    ship.activateSpeedBoost(); // Metodă publică în Spaceship
-}
-
-std::shared_ptr<Entity> SpeedPowerUp::clone() const {
-    return std::make_shared<SpeedPowerUp>(*this);
+    ship.activateSpeedBoost(); 
 }
 
 void ClonePowerUp::applyEffect(Spaceship& ship) {
-    ship.activateClone(); // Metodă publică în Spaceship
-}
-
-std::shared_ptr<Entity> ClonePowerUp::clone() const {
-    return std::make_shared<ClonePowerUp>(*this);
+    ship.activateClone(); 
 }

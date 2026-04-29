@@ -5,34 +5,33 @@
 #include <memory>
 
 class Entity {
+private:
+    virtual void doUpdate() = 0; // Metodă privată pur virtuală pentru logica internă
+    virtual void doDraw(sf::RenderWindow& window) = 0; // Metodă privată pur virtuală pentru desenare
+
 protected:
     sf::Vector2f position; //vector de pozitie pt toate entitatile (are aza Ox si Oy)
     static int entityCount;
+    // Metodă virtuală de ajutor pentru afișarea detaliilor obiectului
     virtual void print(std::ostream& os) const {
         os << "Entitate la pozitia [" << position.x << ", " << position.y << "]";
     }
 
 public:
-    Entity(float x, float y);
-    virtual ~Entity(); 
+    Entity(float x, float y); // Constructor care setează poziția inițială a entității pe ecran
+    virtual ~Entity(); //Destructor virtual
 
-    //interfata non-virtuala. Entity controleaza tot procesul
+    //interfata non-virtuala, entity controleaza tot procesul
     void update();
     void draw(sf::RenderWindow& window);
 
-    virtual void reactToCollision(Entity& other) = 0; //virtual pura, obliga fiecare derivata sa specifice cum
-    //reactioneaza la collision
-    virtual std::shared_ptr<Entity> clone() const = 0;
     virtual sf::FloatRect getBounds() const = 0; //returneaza dreptunghiul care inconjoara obiectul
+    // Supraîncărcarea operatorului de afișare
     friend std::ostream& operator<<(std::ostream& os, const Entity& e) {
         e.print(os);
         return os;
     }
     static int getEntityCount();
-
-private:
-    virtual void doUpdate() = 0;
-    virtual void doDraw(sf::RenderWindow& window) = 0;
 };
 
 #endif //ENTITY_H

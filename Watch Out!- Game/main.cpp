@@ -24,16 +24,20 @@ int main() {
             window.display();
         }
     }
+    catch (const ConfigurationException& e) {
+        std::cerr << "Eroare configuratie: " << e.what() << std::endl;
+        return 3;
+    }
     catch (const ResourceException& e) {
-        std::cerr << "EROARE CRITICA RESURSA: " << e.what() << std::endl;
+        std::cerr << "Eroare imagine: " << e.what() << std::endl;
         return 1;
     }
     catch (const GameException& e) {
-        std::cerr << "EROARE JOC: " << e.what() << std::endl;
+        std::cerr << "Eroare joc: " << e.what() << std::endl;
         return 2;
     }
     catch (const std::exception& e) {
-        std::cerr << "EROARE STANDARDA: " << e.what() << std::endl;
+        std::cerr << "Eroare standard: " << e.what() << std::endl;
         return -1;
     }
     return 0;

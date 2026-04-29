@@ -13,10 +13,10 @@ Laser::Laser(sf::Vector2f pos, float speed)
 }
 
 void Laser::doUpdate() {
-    position.y += speed; // Se mișcă pe verticală
+    position.y += speed;
     shape.setPosition(position);
 
-    // Verificăm dacă a ieșit din ecran (ca în codul tău de referință)
+    // daca iese din ecran
     if (position.y < 0 || position.y > Config::SCREEN_HEIGHT) {
         active = false;
     }
@@ -26,12 +26,4 @@ void Laser::doDraw(sf::RenderWindow& window) {
     if (active) {
         window.draw(shape);
     }
-}
-
-void Laser::reactToCollision(Entity& other) {
-    active = false; // Laserul dispare când lovește ceva
-}
-
-std::shared_ptr<Entity> Laser::clone() const {
-    return std::make_shared<Laser>(*this);
 }
