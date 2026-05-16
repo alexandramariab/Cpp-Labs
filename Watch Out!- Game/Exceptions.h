@@ -8,7 +8,7 @@
 class GameException : public std::runtime_error {
 public:
     explicit GameException(const std::string& msg) : std::runtime_error(msg) {}
-};
+}; 
 
 //excepție pentru imagini
 class ResourceException : public GameException {
