@@ -13,8 +13,10 @@ PowerUp::PowerUp(float x, float y, sf::Color color) : Entity(x, y), active(true)
 void PowerUp::doUpdate() {
     position.y += 2.0f; // Viteza de cădere
     shape.setPosition(position);
-    if (position.y > Config::SCREEN_HEIGHT) active = false;
+    // Utilizare funcție liberă șablon
+    if (isOut(position.y, static_cast<float>(Config::SCREEN_HEIGHT))) active = false;
 }
+
 
 void PowerUp::doDraw(sf::RenderWindow& window) {
     if (active) window.draw(shape);

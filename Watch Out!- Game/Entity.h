@@ -3,6 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <memory>
+#include <iostream>
 
 class Entity {
 private:
@@ -26,6 +27,10 @@ public:
     void draw(sf::RenderWindow& window);
 
     virtual sf::FloatRect getBounds() const = 0; //returneaza dreptunghiul care inconjoara obiectul
+
+    // Design Pattern: Prototype - metodă necesară clonării polimorfice
+    virtual std::shared_ptr<Entity> clone() const = 0;
+
     // Supraîncărcarea operatorului de afișare
     friend std::ostream& operator<<(std::ostream& os, const Entity& e) {
         e.print(os);
@@ -33,5 +38,12 @@ public:
     }
     static int getEntityCount();
 };
-
+// CEREINȚA: Funcție normală/liberă șablon (template) utilă pentru calcularea limitelor de ecran
+template <typename T>
+bool isOut(T currentY, T limitY, bool movingDown = true) {
+    if (movingDown) {
+        return currentY > limitY;
+    }
+    return currentY < limitY;
+}
 #endif //ENTITY_H

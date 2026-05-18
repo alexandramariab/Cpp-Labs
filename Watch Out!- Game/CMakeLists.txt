@@ -26,7 +26,9 @@ add_executable(untitled main.cpp
         Alien.cpp
         Exceptions.h
         PowerUp.h
-        PowerUp.cpp)
+        PowerUp.cpp
+        ResourceManager.h
+        AlienFactory.h)
 target_compile_features(untitled PRIVATE cxx_std_17)
 target_link_libraries(untitled PRIVATE SFML::Graphics)
 

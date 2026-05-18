@@ -10,9 +10,10 @@
 // Cerința 2.a: Moștenire
 class Spaceship : public Entity {
 private:
-    sf::Texture image; 
+    sf::Texture image;
     sf::Sprite sprite; // Obiectul grafic care permite desenarea și poziționarea imaginii
-    std::vector<std::shared_ptr<Laser>> lasers; // Lista de proiectile trase de navă
+    // MODIFICARE: Vectorul reține acum instanțieri ale clasei template (Laser<>)
+    std::vector<std::shared_ptr<Laser<>>> lasers;
     sf::Clock fireClock; // Cronometru intern pentru a preveni tragerea prea rapida
 
     void doUpdate() override;
@@ -34,14 +35,15 @@ public:
     void MoveRight();
 
     void fire();
-    std::vector<std::shared_ptr<Laser>>& getLasers() { return lasers; }
+    // MODIFICARE: Returnează referință la vectorul de clase template
+    std::vector<std::shared_ptr<Laser<>>>& getLasers() { return lasers; }
 
-    std::shared_ptr<Spaceship> clone() const; //Creează o copie identică a navei
+    // DESIGN PATTERN: Prototype (Suprascriere metodă clonare)
+    std::shared_ptr<Entity> clone() const override;
     sf::FloatRect getBounds() const override { return sprite.getGlobalBounds(); }
     void activateSpeedBoost();
     void activateClone();
     void updatePowerUps(); // Verifică dacă timpul bonusurilor a expirat
-    void draw(sf::RenderWindow& window); // O suprascriem pentru a desena și clona
 
 };
 

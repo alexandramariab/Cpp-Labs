@@ -11,7 +11,8 @@ class Game {
 private:
     Spaceship spaceship;
     std::vector<std::shared_ptr<Entity>> allEntities;
-    std::vector<std::shared_ptr<Laser>> alienLasers; 
+    // MODIFICARE: Vectorul de proiectile inamice folosește acum clasa template
+    std::vector<std::shared_ptr<Laser<>>> alienLasers;
     sf::Clock alienFireClock;
     float fireInterval = 1.2f;
     void initAliens(); 

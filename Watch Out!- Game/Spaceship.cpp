@@ -1,18 +1,18 @@
 #include "Spaceship.h"
 #include "Constants.h"
 #include "Exceptions.h"
+#include "ResourceManager.h"
 #include <iostream>
 
 // Constructor
 Spaceship::Spaceship() : Entity(0.f, 0.f), image(), sprite(image) {
-
-    if (!image.loadFromFile("Graphics/spaceship.png")) {
-        throw ResourceException("Graphics/spaceship.png"); 
-    }
+    // Utilizare ResourceManager (Clasă Șablon + Singleton)
+    auto& manager = ResourceManager<sf::Texture>::getInstance();
+    manager.load("spaceship", "Graphics/spaceship.png");
+    image = manager.get("spaceship");
 
     sprite.setTexture(image, true);
 
-    //centram nava pe orizontală și o plasam în partea de jos a ecranului
     position.x = (static_cast<float>(Config::SCREEN_WIDTH) - image.getSize().x) / 2.f;
     position.y = static_cast<float>(Config::SCREEN_HEIGHT) - image.getSize().y - 20.f;
     sprite.setPosition(position);
@@ -42,6 +42,9 @@ Spaceship& Spaceship::operator=(Spaceship other) {
 
 void Spaceship::doDraw(sf::RenderWindow& window) {
     window.draw(sprite);
+    if (cloneActive && shipClone) {
+        shipClone->draw(window);
+    }
 }
 
 void Spaceship::doUpdate() {
@@ -64,20 +67,14 @@ void Spaceship::MoveRight() {
     }
 }   
 
-
-std::shared_ptr<Spaceship> Spaceship::clone() const {
-    return std::make_shared<Spaceship>(*this); //returnează o copie într-un Smart Pointer
-}
 void Spaceship::fire() {
-    if (fireClock.getElapsedTime().asSeconds() > fireInterval) {
-        //poziționăm laserul în vârful navei
-        sf::Vector2f laserPos = { position.x + image.getSize().x / 2.f - 2.f, position.y };
-        lasers.push_back(std::make_shared<Laser>(laserPos, -10.f)); //adaugam laserul in vector, il facem sa se miste in sus
-        //dacă avem clonă, trage și ea
+    if (fireClock.getElapsedTime().asSeconds() >= fireInterval) {
+        // MODIFICARE: Instanțiere folosind clasa template cu argumentul implicit
+        lasers.push_back(std::make_shared<Laser<>>(sf::Vector2f(position.x + 20, position.y), -10.f));
         if (cloneActive && shipClone) {
-            lasers.push_back(std::make_shared<Laser>(sf::Vector2f(shipClone->position.x + 20, shipClone->position.y), -10.f));
+            lasers.push_back(std::make_shared<Laser<>>(sf::Vector2f(shipClone->position.x + 20, shipClone->position.y), -10.f));
         }
-        fireClock.restart(); //resetează cronometrul pentru următorul foc
+        fireClock.restart();
     }
 }
 void Spaceship::activateSpeedBoost() {
@@ -109,12 +106,7 @@ void Spaceship::updatePowerUps() {
         shipClone->doUpdate();
     }
 }
-void Spaceship::draw(sf::RenderWindow& window) {
-    //apelăm metoda din Entity ca să desenăm nava de bază
-    Entity::draw(window);
-
-    //daca avem o clonă, o punem și pe ea să se deseneze
-    if (shipClone != nullptr) {
-        shipClone->draw(window);
-    }
+// Modificat pentru a se potrivi cu patternul Prototype din clasa de bază Entity
+std::shared_ptr<Entity> Spaceship::clone() const {
+    return std::make_shared<Spaceship>(*this);
 }

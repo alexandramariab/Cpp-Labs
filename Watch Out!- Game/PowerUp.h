@@ -30,6 +30,10 @@ public:
     SpeedPowerUp(float x, float y) : PowerUp(x, y, sf::Color::Cyan) {}
     
     void applyEffect(Spaceship& ship) override;
+    
+    std::shared_ptr<Entity> clone() const override {
+        return std::make_shared<SpeedPowerUp>(*this);
+    }
 };
 
 class ClonePowerUp : public PowerUp {
@@ -37,6 +41,10 @@ public:
     ClonePowerUp(float x, float y) : PowerUp(x, y, sf::Color::Magenta) {}
     
     void applyEffect(Spaceship& ship) override;
+
+    std::shared_ptr<Entity> clone() const override {
+        return std::make_shared<ClonePowerUp>(*this);
+    }
 };
 
 #endif//POWERUP_H

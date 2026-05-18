@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "PowerUp.h"
 #include <random>
+#include "AlienFactory.h"
 
 Game::Game() : run(true) {
     initAliens();
@@ -113,10 +114,8 @@ void Game::Update() { //Actualizează starea tuturor obiectelor la fiecare cadru
 
         if (!aliensOnly.empty()) {
             int randomIndex = rand() % aliensOnly.size(); // Alegem un alien random pentru a trage
-            auto shooter = aliensOnly[randomIndex];
-            auto firePos = shooter->getCenter();
-            auto newLaser = std::make_shared<Laser>(firePos, 5.f);
-            alienLasers.push_back(newLaser);
+            // MODIFICARE: Alocare folosind clasa template Laser<>
+            alienLasers.push_back(std::make_shared<Laser<>>(aliensOnly[randomIndex]->getCenter(), 5.f));
         }
         alienFireClock.restart();
     }
@@ -170,13 +169,8 @@ void Game::initAliens() {
             float x = 75.f + column * 55.f;
             float y = 110.f + row * 55.f;
 
-            int alienType;
-            if (row == 0) alienType = 3;
-            else if (row <= 2) alienType = 2;
-            else alienType = 1;
-
-            // le adaugam in vector
-            allEntities.push_back(std::make_shared<Alien>(x, y, alienType));
+            // Cerință: Utilizarea clasei Factory (AlienFactory)
+            allEntities.push_back(AlienFactory::createAlien(x, y, row));
         }
     }
 }

@@ -30,6 +30,11 @@ public:
     float getLeftEdge() const;
     sf::Vector2f getCenter() const;
 
+    // DESIGN PATTERN: Prototype suprascriere
+    std::shared_ptr<Entity> clone() const override {
+        return std::make_shared<Alien>(*this);
+    }
+
     static void changeDirection();
     sf::FloatRect getBounds() const override { return sprite.getGlobalBounds(); }
 

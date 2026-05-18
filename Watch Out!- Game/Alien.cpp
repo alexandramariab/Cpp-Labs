@@ -5,15 +5,19 @@
 #include "Constants.h"
 #include <iostream>
 #include "Exceptions.h"
+#include "ResourceManager.h"
 
 float Alien::speed = 2.0f;
 int Alien::direction = 1;
 
 Alien::Alien(float x, float y, int type) : Entity(x, y), type(type), alive(true), texture(), sprite(texture) {
     std::string path = "Graphics/alien_" + std::to_string(type) + ".png";
-    if (!texture.loadFromFile(path)) {
-        throw ResourceException(path);
-    }
+
+    // Înlocuire cu ResourceManager (Clasă șablon + Singleton) pentru eficientizare și cerință
+    auto& manager = ResourceManager<sf::Texture>::getInstance();
+    manager.load("alien_" + std::to_string(type), path);
+    texture = manager.get("alien_" + std::to_string(type));
+
     sprite.setTexture(texture, true);
     sprite.setPosition(position);
 }
@@ -32,7 +36,9 @@ void Alien::changeDirection() {
 }
 
 float Alien::getRightEdge() const {
-    return position.x + texture.getSize().x;
+    auto& manager = ResourceManager<sf::Texture>::getInstance();
+    std::string textureKey = "alien_" + std::to_string(type);
+    return position.x + manager.get(textureKey).getSize().x;
 }
 
 float Alien::getLeftEdge() const {
@@ -44,5 +50,7 @@ void Alien::doDraw(sf::RenderWindow& window) {
 }
 
 sf::Vector2f Alien::getCenter() const {
-    return { position.x + texture.getSize().x / 2.f, position.y + texture.getSize().y };
+    auto& manager = ResourceManager<sf::Texture>::getInstance();
+    std::string textureKey = "alien_" + std::to_string(type);
+    return { position.x + manager.get(textureKey).getSize().x / 2.f, position.y + manager.get(textureKey).getSize().y };
 }
