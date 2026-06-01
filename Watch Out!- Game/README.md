@@ -376,7 +376,7 @@ Dacă s-ar dori configurabilitate, s-ar folosi fișiere de configurare text, nu 
 | 2e.2 dynamic_cast | ✅ | Utilizat în `Game::Update()` și `CheckForCollisions()` |
 | 2e.3 std::string și vector | ✅ | Fără char* și vectori manuali |
 | 2e.4 shared_ptr | ✅ | Utilizat pentru toate entitățile |
-| 3a. Ierarhie excepții | ⚠️ | GameException, ResourceException, GameplayException, ConfigurationException |
+| 3a. Ierarhie excepții | ✅ | GameException, ResourceException, GameplayException, ConfigurationException |
 | 3b. Throw/catch | ✅ | Throw în constructori, catch în main |
 | 4. Date și funcții statice | ✅ | Entity::entityCount, Alien::speed, Alien::direction |
 | 5. Const | ✅ | Multiple metode const |
